@@ -1,27 +1,31 @@
 package main
 
 import (
+	"errors"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
 )
 
 /* For Template Caching :: To avoid calling ParseFiles every time a page is rendered */
 var templates = template.Must(template.ParseFiles("view.html", "edit.html"))
+
+var validPath = regexp.MustCompile("^/(edit|save|post)/([a-zA-Z0-9]+)$")
 
 type Post struct {
 	Title string
 	Body  []byte
 }
 
-func createAndSavePost(title string, body string) (bool, error) {
+func createAndSavePost(title string, body string) error {
 	p := &Post{Title: title, Body: []byte(body)}
 	err := p.save()
 	if err != nil {
-		return false, err
+		return err
 	}
-	return true, nil
+	return nil
 
 }
 
@@ -39,6 +43,15 @@ func loadPage(title string) (*Post, error) {
 	return &Post{Title: title, Body: body}, nil
 }
 
+func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
+	match := validPath.FindStringSubmatch(r.URL.Path)
+	if match == nil {
+		http.NotFound(w, r)
+		return "", errors.New("The URL does not match or it is misleading")
+	}
+	return match[2], nil
+}
+
 func renderTemplate(w http.ResponseWriter, templ string, p *Post) {
 	err := templates.ExecuteTemplate(w, templ+".html", p)
 	if err != nil {
@@ -48,7 +61,10 @@ func renderTemplate(w http.ResponseWriter, templ string, p *Post) {
 }
 
 func viewPostHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[len("/post/"):]
+	title, err := getTitle(w, r)
+	if err != nil {
+		return
+	}
 	body, err := loadPage(title)
 	if err != nil {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
@@ -59,7 +75,10 @@ func viewPostHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func editPostHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[len("/edit/"):]
+	title, err := getTitle(w, r)
+	if err != nil {
+		return
+	}
 	body, err := loadPage(title)
 	if err != nil {
 		body = &Post{Title: title}
@@ -69,9 +88,12 @@ func editPostHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func savePostHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[len("/save/"):]
+	title, err := getTitle(w, r)
+	if err != nil {
+		return
+	}
 	body := r.FormValue("body")
-	_, err := createAndSavePost(title, body)
+	err = createAndSavePost(title, body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
