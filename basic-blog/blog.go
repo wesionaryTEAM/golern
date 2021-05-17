@@ -9,7 +9,7 @@ import (
 )
 
 /* For Template Caching :: To avoid calling ParseFiles every time a page is rendered */
-var templates = template.Must(template.ParseFiles("view.html", "edit.html"))
+var templates = template.Must(template.ParseGlob("templates/*.html"))
 
 var validPath = regexp.MustCompile("^/(edit|save|post)/([a-zA-Z0-9]+)$")
 
@@ -30,12 +30,12 @@ func createAndSavePost(title string, body string) error {
 
 func (p *Post) save() error {
 	fileName := p.Title + ".txt"
-	return ioutil.WriteFile(fileName, p.Body, 0600)
+	return ioutil.WriteFile("data/"+fileName, p.Body, 0600)
 }
 
 func loadPage(title string) (*Post, error) {
 	fileName := title + ".txt"
-	body, err := ioutil.ReadFile(fileName)
+	body, err := ioutil.ReadFile("data/" + fileName)
 	if err != nil {
 		return nil, err
 	}
