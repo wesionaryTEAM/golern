@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -43,15 +42,6 @@ func loadPage(title string) (*Post, error) {
 	return &Post{Title: title, Body: body}, nil
 }
 
-func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
-	match := validPath.FindStringSubmatch(r.URL.Path)
-	if match == nil {
-		http.NotFound(w, r)
-		return "", errors.New("The URL does not match or it is misleading")
-	}
-	return match[2], nil
-}
-
 func renderTemplate(w http.ResponseWriter, templ string, p *Post) {
 	err := templates.ExecuteTemplate(w, templ+".html", p)
 	if err != nil {
@@ -60,11 +50,18 @@ func renderTemplate(w http.ResponseWriter, templ string, p *Post) {
 	}
 }
 
-func viewPostHandler(w http.ResponseWriter, r *http.Request) {
-	title, err := getTitle(w, r)
-	if err != nil {
-		return
+func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		match := validPath.FindStringSubmatch(r.URL.Path)
+		if match == nil {
+			http.NotFound(w, r)
+			return
+		}
+		fn(w, r, match[2])
 	}
+}
+
+func viewPostHandler(w http.ResponseWriter, r *http.Request, title string) {
 	body, err := loadPage(title)
 	if err != nil {
 		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
@@ -74,11 +71,7 @@ func viewPostHandler(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, "view", body)
 }
 
-func editPostHandler(w http.ResponseWriter, r *http.Request) {
-	title, err := getTitle(w, r)
-	if err != nil {
-		return
-	}
+func editPostHandler(w http.ResponseWriter, r *http.Request, title string) {
 	body, err := loadPage(title)
 	if err != nil {
 		body = &Post{Title: title}
@@ -87,13 +80,9 @@ func editPostHandler(w http.ResponseWriter, r *http.Request) {
 	renderTemplate(w, "edit", body)
 }
 
-func savePostHandler(w http.ResponseWriter, r *http.Request) {
-	title, err := getTitle(w, r)
-	if err != nil {
-		return
-	}
+func savePostHandler(w http.ResponseWriter, r *http.Request, title string) {
 	body := r.FormValue("body")
-	err = createAndSavePost(title, body)
+	err := createAndSavePost(title, body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -103,9 +92,9 @@ func savePostHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/post/", viewPostHandler)
-	http.HandleFunc("/edit/", editPostHandler)
-	http.HandleFunc("/save/", savePostHandler)
+	http.HandleFunc("/post/", makeHandler(viewPostHandler))
+	http.HandleFunc("/edit/", makeHandler(editPostHandler))
+	http.HandleFunc("/save/", makeHandler(savePostHandler))
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
