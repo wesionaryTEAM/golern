@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 /* For Template Caching :: To avoid calling ParseFiles every time a page is rendered */
@@ -61,6 +62,29 @@ func makeHandler(fn func(http.ResponseWriter, *http.Request, string)) http.Handl
 	}
 }
 
+func viewAllPostHandler(w http.ResponseWriter, r *http.Request) {
+	files, err := ioutil.ReadDir("data")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	type fileNames struct {
+		titles []string
+	}
+	titles := []string{}
+	// Loop over the files and get the title (or Filename)
+	for _, file := range files {
+		name := file.Name()
+		title := name[:strings.Index(name, ".txt")]
+		titles = append(titles, title)
+	}
+
+	err = templates.ExecuteTemplate(w, "viewall.html", titles)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
 func viewPostHandler(w http.ResponseWriter, r *http.Request, title string) {
 	body, err := loadPage(title)
 	if err != nil {
@@ -92,6 +116,7 @@ func savePostHandler(w http.ResponseWriter, r *http.Request, title string) {
 }
 
 func main() {
+	http.HandleFunc("/", viewAllPostHandler)
 	http.HandleFunc("/post/", makeHandler(viewPostHandler))
 	http.HandleFunc("/edit/", makeHandler(editPostHandler))
 	http.HandleFunc("/save/", makeHandler(savePostHandler))
