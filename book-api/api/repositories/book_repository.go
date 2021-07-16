@@ -3,6 +3,7 @@ package repositories
 import (
 	"bookapi/infrastructure"
 	"bookapi/models"
+	"fmt"
 )
 
 type BookRepository struct {
@@ -15,6 +16,11 @@ func NewBookRepository(
 	return BookRepository{
 		db: db,
 	}
+}
+
+func (b BookRepository) Create(book models.Book) error {
+	fmt.Println(book, "Book in Repo")
+	return b.db.DB.Create(&book).Error
 }
 
 func (b BookRepository) FindAll() (models.Books, int64, error) {

@@ -3,6 +3,8 @@ package services
 import (
 	"bookapi/api/repositories"
 	"bookapi/models"
+
+	"github.com/google/uuid"
 )
 
 type BookService struct {
@@ -15,6 +17,16 @@ func NewBookService(
 	return BookService{
 		repository: repository,
 	}
+}
+
+func (b BookService) CreateBook(
+	book models.Book,
+) (models.Book, error) {
+	id := uuid.New()
+	book.ID = models.BINARY16(id)
+	err := b.repository.Create(book)
+
+	return book, err
 }
 
 func (b BookService) GetAllBooks() (models.Books, int64, error) {

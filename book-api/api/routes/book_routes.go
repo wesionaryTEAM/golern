@@ -24,5 +24,6 @@ func (b BooksRoute) Setup() {
 	books := b.router.Gin.Group("/books")
 	{
 		books.GET("/", b.controller.HandleGetAllBooks())
+		books.POST("/", b.controller.CreateBook())
 	}
 }
