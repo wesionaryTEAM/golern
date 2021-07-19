@@ -59,3 +59,7 @@ func (b BookRepository) Update(bookId models.BINARY16, book *models.Book) error 
 			"cover_image":    book.Cover_Image,
 		}).Error
 }
+
+func (b BookRepository) Delete(bookId models.BINARY16) error {
+	return b.db.DB.Where("id = ?", bookId).Delete(&models.Book{}).Error
+}

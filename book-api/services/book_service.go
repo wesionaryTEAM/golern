@@ -40,3 +40,7 @@ func (b BookService) GetOneBook(bookId models.BINARY16) (models.Book, error) {
 func (b BookService) UpdateBook(bookId models.BINARY16, book *models.Book) error {
 	return b.repository.Update(bookId, book)
 }
+
+func (b BookService) DeleteBook(bookId models.BINARY16) error {
+	return b.repository.Delete(bookId)
+}

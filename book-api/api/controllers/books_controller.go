@@ -144,3 +144,20 @@ func (bc BooksController) UpdateBook() gin.HandlerFunc {
 		responses.SuccessJSON(c, http.StatusOK, "Book Successfully Updated")
 	}
 }
+
+func (bc BooksController) DeleteBook() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		bookId := c.Param("id")
+		binaryId, err := models.StringToBinary16(bookId)
+		if err != nil {
+			responses.ErrorJSON(c, http.StatusInternalServerError, err.Error())
+		}
+
+		err = bc.service.DeleteBook(binaryId)
+		if err != nil {
+			responses.ErrorJSON(c, http.StatusInternalServerError, err.Error())
+		}
+
+		responses.SuccessJSON(c, http.StatusOK, "Book Successfully Deleted")
+	}
+}
