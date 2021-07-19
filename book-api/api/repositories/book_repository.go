@@ -42,3 +42,20 @@ func (b BookRepository) FindOne(bookId models.BINARY16) (book models.Book, err e
 		Where("id = ?", bookId).
 		First(&book).Error
 }
+
+func (b BookRepository) Update(bookId models.BINARY16, book *models.Book) error {
+	queryBuilder := b.db.DB.Model(&models.Book{})
+	return queryBuilder.
+		Where("id = ?", bookId).
+		Updates(map[string]interface{}{
+			"title":          book.Title,
+			"description":    book.Description,
+			"author":         book.Author,
+			"published_year": book.Published_Year,
+			"isbn":           book.ISBN,
+			"language":       book.Language,
+			"country":        book.Country,
+			"publisher":      book.Publisher,
+			"cover_image":    book.Cover_Image,
+		}).Error
+}

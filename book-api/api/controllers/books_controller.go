@@ -101,8 +101,8 @@ func (bc BooksController) GetOneBook() gin.HandlerFunc {
 		if err != nil {
 			responses.ErrorJSON(c, http.StatusInternalServerError, err.Error())
 		}
-		book, err := bc.service.GetOneBook(binaryId)
 
+		book, err := bc.service.GetOneBook(binaryId)
 		if err != nil {
 			bc.logger.Zap.Error("Failed to get Book", err.Error())
 			responses.ErrorJSON(c, http.StatusInternalServerError, "Failed to get Book")
@@ -112,5 +112,35 @@ func (bc BooksController) GetOneBook() gin.HandlerFunc {
 		responses.JSON(c, http.StatusOK, gin.H{
 			"data": book.ToMap(),
 		})
+	}
+}
+
+func (bc BooksController) UpdateBook() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		bookId := c.Param("id")
+		binaryId, err := models.StringToBinary16(bookId)
+		if err != nil {
+			responses.ErrorJSON(c, http.StatusInternalServerError, err.Error())
+		}
+
+		book, err := bc.service.GetOneBook(binaryId)
+		if err != nil {
+			bc.logger.Zap.Error("Failed to get Book", err.Error())
+			responses.ErrorJSON(c, http.StatusInternalServerError, "Failed to get Book")
+			return
+		}
+
+		if err := c.ShouldBindJSON(&book); err != nil {
+			responses.ErrorJSON(c, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		err = bc.service.UpdateBook(binaryId, &book)
+		if err != nil {
+			responses.ErrorJSON(c, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		responses.SuccessJSON(c, http.StatusOK, "Book Successfully Updated")
 	}
 }

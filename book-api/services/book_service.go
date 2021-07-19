@@ -36,3 +36,7 @@ func (b BookService) GetAllBooks() (models.Books, int64, error) {
 func (b BookService) GetOneBook(bookId models.BINARY16) (models.Book, error) {
 	return b.repository.FindOne(bookId)
 }
+
+func (b BookService) UpdateBook(bookId models.BINARY16, book *models.Book) error {
+	return b.repository.Update(bookId, book)
+}
