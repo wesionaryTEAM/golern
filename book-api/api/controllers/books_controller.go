@@ -93,3 +93,24 @@ func (bc BooksController) HandleGetAllBooks() gin.HandlerFunc {
 		})
 	}
 }
+
+func (bc BooksController) GetOneBook() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		bookId := c.Param("id")
+		binaryId, err := models.StringToBinary16(bookId)
+		if err != nil {
+			responses.ErrorJSON(c, http.StatusInternalServerError, err.Error())
+		}
+		book, err := bc.service.GetOneBook(binaryId)
+
+		if err != nil {
+			bc.logger.Zap.Error("Failed to get Book", err.Error())
+			responses.ErrorJSON(c, http.StatusInternalServerError, "Failed to get Book")
+			return
+		}
+
+		responses.JSON(c, http.StatusOK, gin.H{
+			"data": book.ToMap(),
+		})
+	}
+}

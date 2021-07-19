@@ -34,3 +34,11 @@ func (b BookRepository) FindAll() (models.Books, int64, error) {
 
 	return books, totalRows, err
 }
+
+func (b BookRepository) FindOne(bookId models.BINARY16) (book models.Book, err error) {
+	queryBuilder := b.db.DB.Model(&models.Book{})
+
+	return book, queryBuilder.
+		Where("id = ?", bookId).
+		First(&book).Error
+}

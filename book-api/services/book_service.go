@@ -32,3 +32,7 @@ func (b BookService) CreateBook(
 func (b BookService) GetAllBooks() (models.Books, int64, error) {
 	return b.repository.FindAll()
 }
+
+func (b BookService) GetOneBook(bookId models.BINARY16) (models.Book, error) {
+	return b.repository.FindOne(bookId)
+}

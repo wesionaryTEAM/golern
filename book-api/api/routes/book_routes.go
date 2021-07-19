@@ -25,5 +25,6 @@ func (b BooksRoute) Setup() {
 	{
 		books.GET("/", b.controller.HandleGetAllBooks())
 		books.POST("/", b.controller.CreateBook())
+		books.GET("/:id", b.controller.GetOneBook())
 	}
 }
